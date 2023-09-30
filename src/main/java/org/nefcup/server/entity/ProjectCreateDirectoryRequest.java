@@ -19,6 +19,5 @@ public class ProjectCreateDirectoryRequest {
     private String projectName;
 
     @NotNull
-    @NotBlank
     private String directoryName;
 }

@@ -181,4 +181,23 @@ class ProjectServiceTest {
         Files.delete(projectTempDirectory);
         Files.delete(tempDirectory);
     }
+
+    @Test
+    @DisplayName("Создание директории, название пустое (успешно)")
+    void createDirectory5() throws IOException {
+        Path tempDirectory = Path.of("temp");
+        Files.createDirectories(tempDirectory);
+
+        ProjectService projectService = new ProjectService("temp");
+        projectService.createDirectory(new ProjectCreateDirectoryRequest("project-temp",""));
+
+        Path projectTempDirectory = Path.of("temp", "project-temp");
+
+        assertTrue(Files.exists(projectTempDirectory));
+        assertTrue(Files.exists(tempDirectory));
+
+        Files.delete(projectTempDirectory);
+        Files.delete(tempDirectory);
+    }
+
 }
