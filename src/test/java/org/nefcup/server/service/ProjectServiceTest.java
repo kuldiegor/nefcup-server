@@ -137,4 +137,27 @@ class ProjectServiceTest {
         Files.delete(projectTempDirectory);
         Files.delete(tempDirectory);
     }
+
+    @Test
+    @DisplayName("Создание директории, название одно и тоже (успешно)")
+    void createDirectory4() throws IOException {
+        Path test2Directory = Path.of("temp", "project-temp", "test1", "test2");
+        Files.createDirectories(test2Directory);
+        ProjectService projectService = new ProjectService("temp");
+        projectService.createDirectory(new ProjectCreateDirectoryRequest("project-temp","/test1/test2"));
+
+        Path test1Directory = Path.of("temp", "project-temp", "test1");
+        Path projectTempDirectory = Path.of("temp", "project-temp");
+        Path tempDirectory = Path.of("temp");
+
+        assertTrue(Files.exists(test2Directory));
+        assertTrue(Files.exists(test1Directory));
+        assertTrue(Files.exists(projectTempDirectory));
+        assertTrue(Files.exists(tempDirectory));
+
+        Files.delete(test2Directory);
+        Files.delete(test1Directory);
+        Files.delete(projectTempDirectory);
+        Files.delete(tempDirectory);
+    }
 }
