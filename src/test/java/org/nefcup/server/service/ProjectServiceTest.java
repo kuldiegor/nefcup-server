@@ -76,6 +76,27 @@ class ProjectServiceTest {
     }
 
     @Test
+    @DisplayName("Очистка проекта, каталога такого не существует (успешно)")
+    void cleanProject2() throws IOException {
+        Path tempDirectory = Path.of("temp");
+        Files.createDirectories(tempDirectory);
+        Path test2Directory = Path.of("temp", "project-temp", "test1", "test2");
+        Path testFile2Path = Path.of("temp", "project-temp", "test1", "test2", "test-file2");
+        Path testFile1Path = Path.of("temp", "project-temp", "test1", "test-file1");
+        Path testFilePath = Path.of("temp", "project-temp", "test-file");
+        ProjectService projectService = new ProjectService("temp");
+        projectService.cleanProject(new ProjectCleanRequest("project-temp"));
+
+        assertFalse(Files.exists(test2Directory));
+        assertFalse(Files.exists(testFile2Path));
+        assertFalse(Files.exists(testFile1Path));
+        assertFalse(Files.exists(testFilePath));
+        assertFalse(Files.exists(Path.of("temp","project-temp")));
+
+        Files.delete(tempDirectory);
+    }
+
+    @Test
     @DisplayName("Создание директории (успешно)")
     void createDirectory() throws IOException {
         ProjectService projectService = new ProjectService("temp");

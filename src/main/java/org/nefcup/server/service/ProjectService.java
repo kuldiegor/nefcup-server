@@ -46,7 +46,9 @@ public class ProjectService {
     public void cleanProject(ProjectCleanRequest request) {
         Path projectPath = Path.of("/"+request.getProjectName()).normalize();
         Path fullPathOfProject = Path.of(rootDirectory, projectPath.toString());
-
+        if (!Files.exists(fullPathOfProject)){
+            return;
+        }
         try (Stream<Path> pathStream = Files.walk(fullPathOfProject)) {
             List<Path> pathList = pathStream.collect(Collectors.toList());
             for (int i= pathList.size()-1;i>=0;i--){
