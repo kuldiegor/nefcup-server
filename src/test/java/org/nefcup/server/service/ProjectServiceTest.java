@@ -1,7 +1,9 @@
 package org.nefcup.server.service;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.nefcup.server.entity.ProjectCleanRequest;
 import org.nefcup.server.entity.ProjectCreateDirectoryRequest;
 import org.springframework.http.HttpStatus;
@@ -15,13 +17,21 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ProjectServiceTest {
+
+    private ProjectService projectService;
+
+    @BeforeAll
+    public void init() {
+        projectService = new ProjectService("temp", "rwxr-xr-x","rwxr-xr-x");
+    }
 
     @Test
     @DisplayName("Загрузку файла (ошибка, так как директории не созданы)")
     void uploadFile() throws IOException {
         Files.createDirectories(Path.of("temp"));
-        ProjectService projectService = new ProjectService("temp");
+
         ByteArrayInputStream inputStream = new ByteArrayInputStream("test-text".getBytes(StandardCharsets.UTF_8));
         ResponseStatusException responseStatusException = assertThrows(ResponseStatusException.class, () -> {
             projectService.uploadFile(inputStream, "test.txt", "test-project");
@@ -37,7 +47,7 @@ class ProjectServiceTest {
     void uploadFile2() throws IOException {
         Path testProjectPath = Path.of("temp", "test-project");
         Files.createDirectories(testProjectPath);
-        ProjectService projectService = new ProjectService("temp");
+
         ByteArrayInputStream inputStream = new ByteArrayInputStream("test-text".getBytes(StandardCharsets.UTF_8));
         projectService.uploadFile(inputStream,"test.txt","test-project");
         inputStream.close();
@@ -63,7 +73,7 @@ class ProjectServiceTest {
         Files.writeString(testFile1Path,"test-text1", StandardCharsets.UTF_8);
         Path testFilePath = Path.of("temp", "project-temp", "test-file");
         Files.writeString(testFilePath,"test-text", StandardCharsets.UTF_8);
-        ProjectService projectService = new ProjectService("temp");
+
         projectService.cleanProject(new ProjectCleanRequest("project-temp"));
 
         assertFalse(Files.exists(test2Directory));
@@ -84,7 +94,7 @@ class ProjectServiceTest {
         Path testFile2Path = Path.of("temp", "project-temp", "test1", "test2", "test-file2");
         Path testFile1Path = Path.of("temp", "project-temp", "test1", "test-file1");
         Path testFilePath = Path.of("temp", "project-temp", "test-file");
-        ProjectService projectService = new ProjectService("temp");
+
         projectService.cleanProject(new ProjectCleanRequest("project-temp"));
 
         assertFalse(Files.exists(test2Directory));
@@ -99,7 +109,7 @@ class ProjectServiceTest {
     @Test
     @DisplayName("Создание директории (успешно)")
     void createDirectory() throws IOException {
-        ProjectService projectService = new ProjectService("temp");
+
         projectService.createDirectory(new ProjectCreateDirectoryRequest("project-temp","/test1/test2"));
         Path test2Directory = Path.of("temp", "project-temp", "test1", "test2");
         Path test1Directory = Path.of("temp", "project-temp", "test1");
@@ -120,7 +130,7 @@ class ProjectServiceTest {
     @Test
     @DisplayName("Создание директории с переходом на уровень выше (успешно, но все переходы исключаются)")
     void createDirectory2() throws IOException {
-        ProjectService projectService = new ProjectService("temp");
+
         projectService.createDirectory(new ProjectCreateDirectoryRequest("project-temp","../test1/test2"));
         Path test2Directory = Path.of("temp", "project-temp", "test1", "test2");
         Path test1Directory = Path.of("temp", "project-temp", "test1");
@@ -141,7 +151,7 @@ class ProjectServiceTest {
     @Test
     @DisplayName("Создание директории с переходом на уровень выше (успешно, но все переходы исключаются)")
     void createDirectory3() throws IOException {
-        ProjectService projectService = new ProjectService("temp");
+
         projectService.createDirectory(new ProjectCreateDirectoryRequest("project-temp","/../test1/test2"));
         Path test2Directory = Path.of("temp", "project-temp", "test1", "test2");
         Path test1Directory = Path.of("temp", "project-temp", "test1");
@@ -164,7 +174,7 @@ class ProjectServiceTest {
     void createDirectory4() throws IOException {
         Path test2Directory = Path.of("temp", "project-temp", "test1", "test2");
         Files.createDirectories(test2Directory);
-        ProjectService projectService = new ProjectService("temp");
+
         projectService.createDirectory(new ProjectCreateDirectoryRequest("project-temp","/test1/test2"));
 
         Path test1Directory = Path.of("temp", "project-temp", "test1");
@@ -188,7 +198,7 @@ class ProjectServiceTest {
         Path tempDirectory = Path.of("temp");
         Files.createDirectories(tempDirectory);
 
-        ProjectService projectService = new ProjectService("temp");
+
         projectService.createDirectory(new ProjectCreateDirectoryRequest("project-temp",""));
 
         Path projectTempDirectory = Path.of("temp", "project-temp");

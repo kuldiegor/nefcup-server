@@ -13,7 +13,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -21,9 +25,18 @@ import java.util.stream.Stream;
 @Slf4j
 public class ProjectService {
     private final String rootDirectory;
+    private final Set<PosixFilePermission> filePosixFilePermission;
+    private final Set<PosixFilePermission> directoryPosixFilePermission;
 
-    public ProjectService(@Value("${nefcup.root-directory}") String rootDirectory) {
+    public ProjectService(
+            @Value("${nefcup.root-directory}") String rootDirectory,
+            @Value("${nefcup.file-permissions}") String filePermissionsStr,
+            @Value("${nefcup.directory-permissions}") String directoryPermissionsStr
+            ) {
+        log.info("nefcup.root-directory = "+rootDirectory);
         this.rootDirectory = rootDirectory;
+        filePosixFilePermission = PosixFilePermissions.fromString(filePermissionsStr);
+        directoryPosixFilePermission = PosixFilePermissions.fromString(directoryPermissionsStr);
     }
 
     public void uploadFile(InputStream inputStream, String fileName, String projectName) {
@@ -32,6 +45,8 @@ public class ProjectService {
         Path fullPathOfFile = Path.of(rootDirectory, projectPath.toString(), filePath.toString());
         try {
             Files.createFile(fullPathOfFile);
+            Files.setPosixFilePermissions(fullPathOfFile,filePosixFilePermission);
+            log.info("file = {}",fullPathOfFile);
         } catch (IOException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
@@ -66,6 +81,8 @@ public class ProjectService {
 
         try {
             Files.createDirectories(fullPath);
+            Files.setPosixFilePermissions(fullPath,directoryPosixFilePermission);
+            log.info("directory = {}",fullPath);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
