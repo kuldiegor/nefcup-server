@@ -39,10 +39,24 @@ POSIX разрешения после создания директории.\
 Путь для сохранения логов\
 Обязательный параметр
 
+## Настройка NGINX
+
+    location /nefcup-server {
+            proxy_pass http://localhost:8080;
+            proxy_set_header Host $host;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Real-IP $remote_addr;
+            rewrite ^/nefcup-server(.*)?$ $1 break;
+    }
+
+
 ## Запуск
 Для запуска необходимо заполнить обязательные переменные среды в файле nefcup.service.\
 Скопировать файл nefcup.service в /etc/systemd/system\
-Ввести команду\
-* :~$ sudo systemctl daemon-reload
+Применить изменения
+
+    :~$ sudo systemctl daemon-reload
+      
 Запустить сервис
-* :~$ sudo systemctl restart nefcup\
+
+    :~$ sudo systemctl restart nefcup
