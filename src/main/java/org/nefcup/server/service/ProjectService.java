@@ -13,7 +13,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.List;
@@ -39,17 +38,22 @@ public class ProjectService {
         directoryPosixFilePermission = PosixFilePermissions.fromString(directoryPermissionsStr);
     }
 
-    public void uploadFile(InputStream inputStream, String fileName, String projectName) {
+    public void uploadFile(InputStream inputStream, String fileName, String projectName, Boolean isReplace) {
         Path projectPath = Path.of("/"+projectName).normalize();
         Path filePath = Path.of("/"+fileName).normalize();
         Path fullPathOfFile = Path.of(rootDirectory, projectPath.toString(), filePath.toString());
+        if (!isReplace && Files.exists(fullPathOfFile)){
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY);
+        }
         try {
-            Files.createFile(fullPathOfFile);
-            Files.setPosixFilePermissions(fullPathOfFile,filePosixFilePermission);
-            log.info("file = {}",fullPathOfFile);
+            if (!Files.exists(fullPathOfFile)) {
+                Files.createFile(fullPathOfFile);
+                Files.setPosixFilePermissions(fullPathOfFile, filePosixFilePermission);
+            }
         } catch (IOException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
+        log.info("file = {}",fullPathOfFile);
         try (OutputStream outputStream = Files.newOutputStream(fullPathOfFile)) {
             inputStream.transferTo(outputStream);
             outputStream.flush();

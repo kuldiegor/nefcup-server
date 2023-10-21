@@ -28,13 +28,13 @@ class ProjectServiceTest {
     }
 
     @Test
-    @DisplayName("Загрузку файла (ошибка, так как директории не созданы)")
+    @DisplayName("Загрузка файла (ошибка, так как директории не созданы)")
     void uploadFile() throws IOException {
         Files.createDirectories(Path.of("temp"));
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream("test-text".getBytes(StandardCharsets.UTF_8));
         ResponseStatusException responseStatusException = assertThrows(ResponseStatusException.class, () -> {
-            projectService.uploadFile(inputStream, "test.txt", "test-project");
+            projectService.uploadFile(inputStream, "test.txt", "test-project", false);
         });
         assertEquals(responseStatusException.getStatusCode(), HttpStatus.BAD_REQUEST);
         inputStream.close();
@@ -43,16 +43,63 @@ class ProjectServiceTest {
     }
 
     @Test
-    @DisplayName("Загрузку файла (успешно)")
+    @DisplayName("Загрузка файла (успешно)")
     void uploadFile2() throws IOException {
         Path testProjectPath = Path.of("temp", "test-project");
         Files.createDirectories(testProjectPath);
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream("test-text".getBytes(StandardCharsets.UTF_8));
-        projectService.uploadFile(inputStream,"test.txt","test-project");
+        projectService.uploadFile(inputStream,"test.txt","test-project", false);
         inputStream.close();
 
         Path testPath = Path.of("temp", "test-project", "test.txt");
+        assertTrue(Files.exists(testPath));
+        String temp = Files.readString(testPath, StandardCharsets.UTF_8);
+        assertEquals("test-text",temp);
+
+        Files.delete(testPath);
+        Files.delete(testProjectPath);
+        Files.delete(Path.of("temp"));
+    }
+
+    @Test
+    @DisplayName("Загрузка файла (ошибка так как файл уже есть)")
+    void uploadFile3() throws IOException {
+        Path testProjectPath = Path.of("temp", "test-project");
+        Files.createDirectories(testProjectPath);
+        Path testPath = Path.of("temp", "test-project", "test.txt");
+        Files.writeString(testPath,"test-text-original",StandardCharsets.UTF_8);
+
+        ByteArrayInputStream inputStream = new ByteArrayInputStream("test-text".getBytes(StandardCharsets.UTF_8));
+        ResponseStatusException responseStatusException = assertThrows(ResponseStatusException.class, () -> projectService.uploadFile(inputStream, "test.txt", "test-project", false));
+        assertEquals(HttpStatus.UNPROCESSABLE_ENTITY,responseStatusException.getStatusCode());
+
+        inputStream.close();
+
+
+        assertTrue(Files.exists(testPath));
+        String temp = Files.readString(testPath, StandardCharsets.UTF_8);
+        assertEquals("test-text-original",temp);
+
+        Files.delete(testPath);
+        Files.delete(testProjectPath);
+        Files.delete(Path.of("temp"));
+    }
+
+    @Test
+    @DisplayName("Загрузка файла (успешно, файл существует, но включён флаг замены)")
+    void uploadFile4() throws IOException {
+        Path testProjectPath = Path.of("temp", "test-project");
+        Files.createDirectories(testProjectPath);
+        Path testPath = Path.of("temp", "test-project", "test.txt");
+        Files.writeString(testPath,"test-text-original",StandardCharsets.UTF_8);
+
+        ByteArrayInputStream inputStream = new ByteArrayInputStream("test-text".getBytes(StandardCharsets.UTF_8));
+        projectService.uploadFile(inputStream, "test.txt", "test-project", true);
+
+        inputStream.close();
+
+
         assertTrue(Files.exists(testPath));
         String temp = Files.readString(testPath, StandardCharsets.UTF_8);
         assertEquals("test-text",temp);

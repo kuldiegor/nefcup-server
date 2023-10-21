@@ -21,9 +21,10 @@ public class ProjectController {
     public void uploadFile(
             HttpServletRequest request,
             @RequestParam("file-name") String fileName,
-            @RequestParam("project-name") String projectName
+            @RequestParam("project-name") String projectName,
+            @RequestParam("is-replace") Boolean isReplace
             ) throws IOException {
-        projectService.uploadFile(request.getInputStream(),fileName,projectName);
+        projectService.uploadFile(request.getInputStream(),fileName,projectName,isReplace);
     }
 
     @PostMapping(value = "/clean",consumes = MediaType.APPLICATION_JSON_VALUE)
