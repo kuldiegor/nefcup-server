@@ -26,6 +26,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
@@ -83,10 +84,19 @@ public class ProjectService {
         if (!Files.exists(fullPathOfProject)){
             return;
         }
+        IgnoreService ignoreService = new IgnoreService(request.getCleanIgnoreText());
         try (Stream<Path> pathStream = Files.walk(fullPathOfProject)) {
             List<Path> pathList = pathStream.collect(Collectors.toList());
             for (int i= pathList.size()-1;i>=0;i--){
-                Files.delete(pathList.get(i));
+                Path path = pathList.get(i);
+                Path relativize = fullPathOfProject.relativize(path);
+                if (!ignoreService.isIgnore(relativize)) {
+                    try {
+                        Files.delete(path);
+                    } catch (DirectoryNotEmptyException ignore){
+
+                    }
+                }
             }
         } catch (IOException e) {
             throw new RuntimeException(e);

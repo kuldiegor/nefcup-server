@@ -136,7 +136,7 @@ class ProjectServiceTest {
         Path testFilePath = Path.of("temp", "project-temp", "test-file");
         Files.writeString(testFilePath,"test-text", StandardCharsets.UTF_8);
 
-        projectService.cleanProject(new ProjectCleanRequest("project-temp"));
+        projectService.cleanProject(new ProjectCleanRequest("project-temp",null));
 
         assertFalse(Files.exists(test2Directory));
         assertFalse(Files.exists(testFile2Path));
@@ -157,7 +157,7 @@ class ProjectServiceTest {
         Path testFile1Path = Path.of("temp", "project-temp", "test1", "test-file1");
         Path testFilePath = Path.of("temp", "project-temp", "test-file");
 
-        projectService.cleanProject(new ProjectCleanRequest("project-temp"));
+        projectService.cleanProject(new ProjectCleanRequest("project-temp",null));
 
         assertFalse(Files.exists(test2Directory));
         assertFalse(Files.exists(testFile2Path));
@@ -166,6 +166,77 @@ class ProjectServiceTest {
         assertFalse(Files.exists(Path.of("temp","project-temp")));
 
         Files.delete(tempDirectory);
+    }
+
+    @Test
+    @DisplayName("Очистка проекта (успешно). Проигнорированы файлы из входящего запроса.")
+    void cleanProject3() throws IOException {
+        Path test2Directory = Path.of("temp", "project-temp", "test1", "test2");
+        Files.createDirectories(test2Directory);
+        Path testFile2Path = Path.of("temp", "project-temp", "test1", "test2", "test-file2");
+        Files.writeString(testFile2Path,"test-text2", StandardCharsets.UTF_8);
+        Path testFile1Path = Path.of("temp", "project-temp", "test1", "test-file1");
+        Files.writeString(testFile1Path,"test-text1", StandardCharsets.UTF_8);
+        Path testFilePath = Path.of("temp", "project-temp", "test-file");
+        Files.writeString(testFilePath,"test-text", StandardCharsets.UTF_8);
+
+        projectService.cleanProject(
+                new ProjectCleanRequest(
+                        "project-temp",
+                        """
+                                test-file
+                                test1/test-file1
+                                """
+                )
+        );
+
+        assertFalse(Files.exists(test2Directory));
+        assertFalse(Files.exists(testFile2Path));
+        assertTrue(Files.exists(testFile1Path));
+        assertTrue(Files.exists(testFilePath));
+        assertTrue(Files.exists(Path.of("temp","project-temp")));
+
+        Files.delete(testFile1Path);
+        Files.delete(Path.of("temp", "project-temp", "test1"));
+        Files.delete(testFilePath);
+        Files.delete(Path.of("temp", "project-temp"));
+        Files.delete(Path.of("temp"));
+    }
+
+    @Test
+    @DisplayName("Очистка проекта (успешно). Проигнорированы файлы из входящего запроса.")
+    void cleanProject4() throws IOException {
+        Path test2Directory = Path.of("temp", "project-temp", "test1", "test2");
+        Files.createDirectories(test2Directory);
+        Path testFile2Path = Path.of("temp", "project-temp", "test1", "test2", "test-file2");
+        Files.writeString(testFile2Path,"test-text2", StandardCharsets.UTF_8);
+        Path testFile1Path = Path.of("temp", "project-temp", "test1", "test-file1");
+        Files.writeString(testFile1Path,"test-text1", StandardCharsets.UTF_8);
+        Path testFilePath = Path.of("temp", "project-temp", "test-file");
+        Files.writeString(testFilePath,"test-text", StandardCharsets.UTF_8);
+
+        projectService.cleanProject(
+                new ProjectCleanRequest(
+                        "project-temp",
+                        """
+                                test1/test2/test-file2
+                                test1/test-file1
+                                """
+                )
+        );
+
+        assertTrue(Files.exists(test2Directory));
+        assertTrue(Files.exists(testFile2Path));
+        assertTrue(Files.exists(testFile1Path));
+        assertFalse(Files.exists(testFilePath));
+        assertTrue(Files.exists(Path.of("temp","project-temp")));
+
+        Files.delete(testFile1Path);
+        Files.delete(testFile2Path);
+        Files.delete(test2Directory);
+        Files.delete(Path.of("temp", "project-temp", "test1"));
+        Files.delete(Path.of("temp", "project-temp"));
+        Files.delete(Path.of("temp"));
     }
 
     @Test

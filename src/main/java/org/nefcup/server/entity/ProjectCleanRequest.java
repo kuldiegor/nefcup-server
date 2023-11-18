@@ -32,4 +32,6 @@ public class ProjectCleanRequest {
     @NotNull
     @NotBlank
     private String projectName;
+
+    private String cleanIgnoreText;
 }
