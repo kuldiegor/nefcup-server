@@ -19,6 +19,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.nefcup.server.entity.FileDeleteRequest;
 import org.nefcup.server.entity.ProjectCleanRequest;
 import org.nefcup.server.entity.ProjectCreateDirectoryRequest;
 import org.springframework.http.HttpStatus;
@@ -341,6 +342,129 @@ class ProjectServiceTest {
 
         Files.delete(projectTempDirectory);
         Files.delete(tempDirectory);
+    }
+
+    @Test
+    @DisplayName("Удаление файла (успешно, файл существует)")
+    void deleteFile1() throws IOException {
+        Path testProjectPath = Path.of("temp", "test-project");
+        Files.createDirectories(testProjectPath);
+        Path testPath = Path.of("temp", "test-project", "test.txt");
+        Files.writeString(testPath,"test-text-original",StandardCharsets.UTF_8);
+
+        projectService.deleteFile(new FileDeleteRequest(
+                "test-project",
+                "test.txt",
+                null
+        ));
+
+        assertFalse(Files.exists(testPath));
+
+        Files.delete(testProjectPath);
+        Files.delete(Path.of("temp"));
+    }
+
+    @Test
+    @DisplayName("Удаление файла (успешно, файл отсутствует)")
+    void deleteFile2() throws IOException {
+        Path testProjectPath = Path.of("temp", "test-project");
+        Files.createDirectories(testProjectPath);
+        Path testPath = Path.of("temp", "test-project", "test.txt");
+
+        projectService.deleteFile(new FileDeleteRequest(
+                "test-project",
+                "test.txt",
+                null
+        ));
+
+        assertFalse(Files.exists(testPath));
+
+        Files.delete(testProjectPath);
+        Files.delete(Path.of("temp"));
+    }
+
+    @Test
+    @DisplayName("Удаление файла вместе с каталогом (успешно, файл существует)")
+    void deleteFile3() throws IOException {
+        Path testProjectPath = Path.of("temp", "test-project");
+        Files.createDirectories(testProjectPath);
+        Path test1Directory = Path.of("temp", "test-project", "test1");
+        Files.createDirectories(test1Directory);
+
+        Path testPath = Path.of("temp", "test-project", "test1","test.txt");
+        Files.writeString(testPath,"test-text-original",StandardCharsets.UTF_8);
+
+        projectService.deleteFile(new FileDeleteRequest(
+                "test-project",
+                "test1",
+                null
+        ));
+
+        assertFalse(Files.exists(testPath));
+        assertFalse(Files.exists(test1Directory));
+
+        Files.delete(testProjectPath);
+        Files.delete(Path.of("temp"));
+    }
+
+    @Test
+    @DisplayName("Удаление файла (успешно, файл существует)")
+    void deleteFile4() throws IOException {
+        Path testProjectPath = Path.of("temp", "test-project");
+        Files.createDirectories(testProjectPath);
+        Path test1Directory = Path.of("temp", "test-project", "test1");
+        Files.createDirectories(test1Directory);
+
+        Path testPath = Path.of("temp", "test-project", "test1","test.txt");
+
+        projectService.deleteFile(new FileDeleteRequest(
+                "test-project",
+                "test1/test.txt",
+                null
+        ));
+
+        assertFalse(Files.exists(testPath));
+        assertTrue(Files.exists(test1Directory));
+
+        Files.delete(test1Directory);
+        Files.delete(testProjectPath);
+        Files.delete(Path.of("temp"));
+    }
+
+    @Test
+    @DisplayName("Удаление файла (успешно). Проигнорированы файлы из входящего запроса.")
+    void deleteFile5() throws IOException {
+        Path test2Directory = Path.of("temp", "project-temp", "test1", "test2");
+        Files.createDirectories(test2Directory);
+        Path testFile2Path = Path.of("temp", "project-temp", "test1", "test2", "test-file2");
+        Files.writeString(testFile2Path,"test-text2", StandardCharsets.UTF_8);
+        Path testFile1Path = Path.of("temp", "project-temp", "test1", "test-file1");
+        Files.writeString(testFile1Path,"test-text1", StandardCharsets.UTF_8);
+        Path testFilePath = Path.of("temp", "project-temp", "test-file");
+        Files.writeString(testFilePath,"test-text", StandardCharsets.UTF_8);
+
+        projectService.deleteFile(
+                new FileDeleteRequest(
+                        "project-temp",
+                        "test1",
+                        """
+                                test-file1
+                                """
+                )
+        );
+
+        assertFalse(Files.exists(test2Directory));
+        assertFalse(Files.exists(testFile2Path));
+        assertTrue(Files.exists(testFile1Path));
+        assertTrue(Files.exists(testFilePath));
+        assertTrue(Files.exists(Path.of("temp","project-temp")));
+        assertTrue(Files.exists(Path.of("temp","project-temp","test1")));
+
+        Files.delete(testFile1Path);
+        Files.delete(testFilePath);
+        Files.delete(Path.of("temp", "project-temp", "test1"));
+        Files.delete(Path.of("temp", "project-temp"));
+        Files.delete(Path.of("temp"));
     }
 
 }

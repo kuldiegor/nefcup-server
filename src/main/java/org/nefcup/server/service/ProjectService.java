@@ -16,6 +16,7 @@
 package org.nefcup.server.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.nefcup.server.entity.FileDeleteRequest;
 import org.nefcup.server.entity.ProjectCleanRequest;
 import org.nefcup.server.entity.ProjectCreateDirectoryRequest;
 import org.springframework.beans.factory.annotation.Value;
@@ -84,23 +85,7 @@ public class ProjectService {
         if (!Files.exists(fullPathOfProject)){
             return;
         }
-        IgnoreService ignoreService = new IgnoreService(request.getCleanIgnoreText());
-        try (Stream<Path> pathStream = Files.walk(fullPathOfProject)) {
-            List<Path> pathList = pathStream.collect(Collectors.toList());
-            for (int i= pathList.size()-1;i>=0;i--){
-                Path path = pathList.get(i);
-                Path relativize = fullPathOfProject.relativize(path);
-                if (!ignoreService.isIgnore(relativize)) {
-                    try {
-                        Files.delete(path);
-                    } catch (DirectoryNotEmptyException ignore){
-
-                    }
-                }
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        deleteDirectory(fullPathOfProject,request.getCleanIgnoreText());
     }
 
     public void createDirectory(ProjectCreateDirectoryRequest request) {
@@ -112,6 +97,44 @@ public class ProjectService {
             Files.createDirectories(fullPath);
             Files.setPosixFilePermissions(fullPath,directoryPosixFilePermission);
             log.info("directory = {}",fullPath);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void deleteFile(FileDeleteRequest request) {
+        Path projectPath = Path.of("/"+request.getProjectName()).normalize();
+        Path filePath = Path.of("/"+request.getFileName()).normalize();
+        Path fullPathOfFile = Path.of(rootDirectory, projectPath.toString(), filePath.toString());
+        if (!Files.exists(fullPathOfFile)){
+            return;
+        }
+        if (Files.isDirectory(fullPathOfFile)){
+            deleteDirectory(fullPathOfFile,request.getCleanIgnoreText());
+        } else {
+            try {
+                Files.delete(fullPathOfFile);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    private void deleteDirectory(Path fullPathOfDirectory,String cleanIgnoreText){
+        IgnoreService ignoreService = new IgnoreService(cleanIgnoreText);
+        try (Stream<Path> pathStream = Files.walk(fullPathOfDirectory)) {
+            List<Path> pathList = pathStream.collect(Collectors.toList());
+            for (int i= pathList.size()-1;i>=0;i--){
+                Path path = pathList.get(i);
+                Path relativize = fullPathOfDirectory.relativize(path);
+                if (!ignoreService.isIgnore(relativize)) {
+                    try {
+                        Files.delete(path);
+                    } catch (DirectoryNotEmptyException ignore){
+
+                    }
+                }
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

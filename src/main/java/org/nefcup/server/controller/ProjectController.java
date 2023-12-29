@@ -18,6 +18,7 @@ package org.nefcup.server.controller;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.nefcup.server.entity.FileDeleteRequest;
 import org.nefcup.server.entity.ProjectCleanRequest;
 import org.nefcup.server.entity.ProjectCreateDirectoryRequest;
 import org.nefcup.server.service.ProjectService;
@@ -50,5 +51,10 @@ public class ProjectController {
     @PostMapping(value = "/directory/create",consumes = MediaType.APPLICATION_JSON_VALUE)
     public void createDirectory(@Valid @RequestBody ProjectCreateDirectoryRequest request){
         projectService.createDirectory(request);
+    }
+
+    @PostMapping(value = "/file/delete",consumes = MediaType.APPLICATION_JSON_VALUE)
+    public void deleteFile(@Valid @RequestBody FileDeleteRequest request) {
+        projectService.deleteFile(request);
     }
 }
